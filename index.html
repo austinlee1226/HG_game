@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HG_game</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #1a1a1a;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        #game-container {
+            position: relative; width: 720px; height: 1280px;
+            background-color: #000; transform-origin: center; overflow: hidden;
+        }
+
+        .scene {
+            position: absolute; width: 100%; height: 100%;
+            left: 0; top: 0; display: none; 
+        }
+        .scene.active { display: block; }
+
+        .bg-layer {
+            position: absolute; width: 720px; height: 1280px;
+            left: 0; top: 0; background-size: 100% 100%; z-index: 0;
+        }
+
+        .ui-component {
+            position: absolute; transform: translate(-50%, -50%);
+            user-select: none; -webkit-user-drag: none;
+        }
+
+        .btn-interact { cursor: pointer; transition: transform 0.1s; }
+        .btn-interact:active { transform: translate(-50%, -50%) scale(0.92); filter: brightness(0.85); }
+
+        /* --- 過渡黑幕樣式 --- */
+        #fade-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            opacity: 0;
+            pointer-events: none; /* 沒動畫時不阻擋點擊 */
+            z-index: 999; /* 確保在最上層 */
+            transition: opacity 0.5s ease; /* 控制過渡速度，0.5秒 */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="fade-layer"></div>
+        
+        <div id="login-scene" class="scene active">
+            <div class="bg-layer" style="background-image: url('assets/bg_login.webp');"></div>
+            <img src="assets/logo_main.webp" class="ui-component" 
+                 style="width: 586px; height: 227px; left: 360px; top: 432px; z-index: 10;">
+            <img src="assets/btn_start.webp" class="ui-component btn-interact" 
+                 style="width: 455px; height: 77px; left: 360px; top: 860px; z-index: 20;"
+                 onclick="transitionToScene('game-scene')">
+        </div>
+
+        <div id="game-scene" class="scene">
+            <div class="bg-layer" style="background-image: url('assets/bg_game_play.webp');"></div>
+            </div>
+    </div>
+
+    <script>
+        const fadeLayer = document.getElementById('fade-layer');
+
+        /**
+         * 帶有動畫的場景切換
+         */
+        function transitionToScene(sceneId) {
+            // 1. 黑幕變黑 (Fade Out)
+            fadeLayer.style.opacity = '1';
+            
+            // 2. 等黑幕完全變黑後再換場景
+            setTimeout(() => {
+                changeScene(sceneId);
+                
+                // 3. 黑幕變透明 (Fade In)
+                fadeLayer.style.opacity = '0';
+            }, 500); // 這裡的時間要跟 CSS transition 一致
+        }
+
+        function changeScene(sceneId) {
+            document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+            document.getElementById(sceneId).classList.add('active');
+        }
+
+        function resizeGame() {
+            const container = document.getElementById('game-container');
+            const scale = Math.min(window.innerWidth / 720, window.innerHeight / 1280);
+            container.style.transform = `scale(${scale})`;
+        }
+
+        window.addEventListener('resize', resizeGame);
+        window.onload = resizeGame;
+    </script>
+</body>
+</html>
