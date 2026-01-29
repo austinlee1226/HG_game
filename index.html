@@ -5,15 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>HG_game</title>
     <style>
-        * { box-sizing: border-box; }
+        /* 基礎設置：防止手機預設行為 */
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+        }
         
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             overflow: hidden; background-color: #000;
             display: flex; justify-content: center; align-items: center;
-            position: fixed; /* 防止橡皮筋效果 */
+            position: fixed; /* 防止 iOS 橡皮筋回彈 */
+            font-family: sans-serif;
         }
 
+        /* 遊戲主畫布容器 (720x1280) */
         #game-container {
             position: relative;
             width: 720px;
@@ -25,32 +31,53 @@
             z-index: 1;
         }
 
+        /* 場景管理 */
         .scene {
             position: absolute; width: 100%; height: 100%;
             left: 0; top: 0; display: none;
         }
         .scene.active { display: block; }
 
+        /* 背景圖層 */
         .bg-layer {
             position: absolute; width: 100%; height: 100%;
             left: 0; top: 0;
             background-size: 100% 100%;
             background-repeat: no-repeat;
+            z-index: 0;
         }
 
+        /* UI 與 角色 元件通用樣式 (中心點對位) */
         .ui-component {
             position: absolute;
             transform: translate(-50%, -50%);
             user-select: none;
             -webkit-user-drag: none;
+            pointer-events: auto;
         }
 
+        /* 主角專用：微細呼吸動畫 */
+        @keyframes idleFloat {
+            0% { transform: translate(-50%, -50%) translateY(0px); }
+            50% { transform: translate(-50%, -50%) translateY(-4px); }
+            100% { transform: translate(-50%, -50%) translateY(0px); }
+        }
+        .hero-idle {
+            animation: idleFloat 4s ease-in-out infinite;
+        }
+
+        /* 按鈕互動效果 */
         .btn-interact { cursor: pointer; transition: transform 0.1s; }
         .btn-interact:active { transform: translate(-50%, -50%) scale(0.92); filter: brightness(0.85); }
 
+        /* 全螢幕過渡黑幕 */
         #fade-layer {
-            position: absolute; width: 100%; height: 100%;
-            background: #000; opacity: 0; pointer-events: none; z-index: 999;
+            position: absolute;
+            width: 100%; height: 100%;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 999;
             transition: opacity 0.5s ease;
         }
     </style>
@@ -62,8 +89,10 @@
         
         <div id="login-scene" class="scene active">
             <div class="bg-layer" style="background-image: url('assets/bg_login.webp');"></div>
+            
             <img src="assets/logo_main.webp" class="ui-component" 
                  style="width: 586px; height: 227px; left: 360px; top: 432px; z-index: 10;">
+            
             <img src="assets/btn_start.webp" class="ui-component btn-interact" 
                  style="width: 455px; height: 77px; left: 360px; top: 860px; z-index: 20;"
                  onclick="transitionToScene('game-scene')">
@@ -71,35 +100,52 @@
 
         <div id="game-scene" class="scene">
             <div class="bg-layer" style="background-image: url('assets/bg_game_play.webp');"></div>
-        </div>
+            
+            <img src="assets/char_hero_idle.webp" 
+                 class="ui-component hero-idle" 
+                 style="width: 447px; height: 1201px; left: 340px; top: 838px; z-index: 5;">
+            
+            </div>
+
     </div>
 
     <script>
+        /**
+         * 強制縮放邏輯：確保 720x1280 完整顯示且不隨轉向出錯
+         */
         function resizeGame() {
             const container = document.getElementById('game-container');
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
 
-            // 無論橫向或縱向，都以「能把 720x1280 塞進去」的最小比例為準
+            // 取得最小縮放比，確保畫布不超出螢幕
             const scale = Math.min(windowWidth / 720, windowHeight / 1280);
 
             container.style.transform = `scale(${scale})`;
         }
 
+        /**
+         * 帶動畫的場景切換
+         */
         function transitionToScene(sceneId) {
             const fade = document.getElementById('fade-layer');
-            fade.style.opacity = '1';
+            fade.style.opacity = '1'; // 變黑
+            
             setTimeout(() => {
+                // 隱藏舊場景，顯示新場景
                 document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
                 document.getElementById(sceneId).classList.add('active');
-                fade.style.opacity = '0';
-            }, 500);
+                
+                fade.style.opacity = '0'; // 變透明
+            }, 500); 
         }
 
-        // 只監聽 resize 即可，scale 邏輯會自動處理置中
+        // 監聽視窗變化
         window.addEventListener('resize', resizeGame);
-        window.onload = resizeGame;
+        
+        // 確保不同載入階段都能正確縮放
         document.addEventListener('DOMContentLoaded', resizeGame);
+        window.onload = resizeGame;
     </script>
 </body>
 </html>
